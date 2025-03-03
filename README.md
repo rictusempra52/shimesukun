@@ -1,189 +1,136 @@
-# 🏢 分識マンション管理システム「しめすくん」 設計書
+# マンション書類管理システム
 
-## **1. 概要**
+マンションの書類をデジタル化して管理するシステムです。PDFや画像をアップロードし、OCR機能でテキストを抽出して検索可能にします。
 
-本システムは、分識マンションの管理業務を効率化するためのプラットフォームです。  
-マンションの重要書類を **電子化・Web 化** し、**高度な AI 検索** を提供します。
+## 主な機能
 
-## **2. 機能一覧**
+- 書類のアップロード・管理
+  - PDF、JPG、PNGファイルに対応
+  - タイトル、マンション、日付による管理
+  - OCRによるテキスト抽出（PDFのみ）
 
--   📝 **書類管理**
-    -   PDF アップロード・OCR 処理（テキスト抽出）
-    -   書類の全文検索・AI 応答機能
--   🏢 **マンション情報管理**
-    -   マンションごとの基本情報（住所・築年数・総房数など）
-    -   書類との結び付け
--   🛠️ **管理会社向け機能**
-    -   マンションごとの書類を統合管理
-    -   居住者向けのアクセス制御
--   🔍 **AI による質問応答**
-    -   書類を基にした高度な Q&A 機能（NotebookLM 的な機能）
-    -   検索性の向上（全文検索 + 自然言語処理）
+- 書類の検索
+  - マンションごとの書類一覧
+  - タイトル・本文による全文検索
+  - アップロード日時による並び替え
 
----
+- マンション・管理会社の管理
+  - マンションと管理会社の紐付け
+  - 住所、戸数などの基本情報管理
 
-## **3. システム構成**
+## 必要要件
 
-```mermaid
-graph TD;
-    subgraph ユーザー
-        A[管理会社] -->|Web| B[管理システム]
-        C[居住者] -->|Web| B
-    end
+- PHP 8.1以上
+- MySQL 5.7以上
+- Composer
+- Node.js 16以上
+- Tesseract OCR（PDFからのテキスト抽出に使用）
 
-    subgraph バックエンド
-        B[管理システム] -->|API| D[データベース]
-        B -->|Storage| E[書類保存]
-        B -->|OCR処理| F[AIエンジン]
-    end
+## インストール
 
-    subgraph データレイヤー
-        D[データベース] -->|Management Data| G[buildingsテーブル]
-        D -->|Documents| H[documentsテーブル]
-    end
+1. リポジトリのクローン
+```bash
+git clone [リポジトリURL]
+cd [プロジェクトディレクトリ]
 ```
 
----
-
-## **4. 使用技術**
-
--   フロントエンド: Laravel Blade
--   バックエンド: Laravel
--   データベース: MySQL
-
----
-
-## **5. 優先する機能**
-
-1. 書類管理
-2. AI による質問応答
-
----
-
-## **6. データベース設計**
-
-### **📌 ER 図**
-
-```mermaid
-erDiagram
-    COMPANIES ||--o{ BUILDINGS : "管理"
-    BUILDINGS ||--o{ DOCUMENTS : "書類管理"
-    USERS ||--o{ DOCUMENTS : "アップロード"
-    USERS ||--o{ BUILDINGS : "管理"
-
-    COMPANIES {
-        bigint id PK
-        string name "会社名"
-        string address "住所"
-    }
-
-    BUILDINGS {
-        bigint id PK
-        bigint company_id FK "管理会社ID"
-        string name "マンション名"
-        string address "住所"
-        int unit_count "総戸数"
-        year built_year "築年"
-    }
-
-    DOCUMENTS {
-        bigint id PK
-        bigint building_id FK "マンションID"
-        bigint user_id FK "アップロードしたユーザー"
-        string title "書類タイトル"
-        string file_path "PDFファイルパス"
-        text ocr_text "OCRテキスト"
-    }
-
-    USERS {
-        bigint id PK
-        string name "ユーザー名"
-        string email "メールアドレス"
-        string password "パスワード"
-    }
+2. 依存パッケージのインストール
+```bash
+composer install
+npm install
 ```
 
----
+3. 環境設定
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## **7. API 設計**　
+4. データベースの設定
+`.env`ファイルでデータベースの接続情報を設定します：
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=shimesukun
+DB_USERNAME=[ユーザー名]
+DB_PASSWORD=[パスワード]
+```
 
-今回は実装しません。
+5. データベースのマイグレーション
+```bash
+php artisan migrate
+php artisan db:seed  # テストデータの作成
+```
 
-### **書類管理**
+6. ストレージのリンク作成
+```bash
+php artisan storage:link
+```
 
-1. **書類アップロード**
+7. ビルド & 実行
+```bash
+npm run build
+php artisan serve
+```
 
-    - **エンドポイント**: POST /api/documents
-    - **リクエストボディ**:
-        ```json
-        {
-            "building_id": 1,
-            "user_id": 1,
-            "title": "契約書",
-            "file": "base64_encoded_pdf"
-        }
-        ```
-    - **レスポンス**:
-        ```json
-        {
-            "id": 1,
-            "building_id": 1,
-            "user_id": 1,
-            "title": "契約書",
-            "file_path": "/storage/documents/1.pdf",
-            "ocr_text": "OCRで抽出されたテキスト"
-        }
-        ```
+## 使用方法
 
-2. **書類検索**
-    - **エンドポイント**: GET /api/documents/search
-    - **クエリパラメータ**:
-        - `query`: 検索クエリ
-    - **レスポンス**:
-        ```json
-        [
-            {
-                "id": 1,
-                "building_id": 1,
-                "user_id": 1,
-                "title": "契約書",
-                "file_path": "/storage/documents/1.pdf",
-                "ocr_text": "OCRで抽出されたテキスト"
-            }
-        ]
-        ```
+1. ログイン
+   - デフォルトのテストアカウント:
+     - 管理者: admin@example.com / password
+     - 一般: test@example.com / password
 
-### **AI による質問応答**
+2. 書類のアップロード
+   - 「新規アップロード」ボタンから書類をアップロード
+   - マンション、タイトル、ファイルを選択
+   - PDFの場合は自動でテキスト抽出
 
-1. **質問応答**
-    - **エンドポイント**: POST /api/ai/ask
-    - **リクエストボディ**:
-        ```json
-        {
-            "question": "契約書の内容を教えてください"
-        }
-        ```
-    - **レスポンス**:
-        ```json
-        {
-            "answer": "契約書の内容は以下の通りです..."
-        }
-        ```
+3. 書類の検索・閲覧
+   - マンションを選択して絞り込み
+   - キーワードで検索
+   - 一覧から書類を選択して詳細表示
 
----
+## OCR機能について
 
-## **8. セキュリティ設計**
+PDFファイルをアップロードすると、Tesseract OCRを使用して自動的にテキストを抽出します。抽出されたテキストは検索対象となり、書類の検索性を向上させます。
 
--   **認証**: JWT を使用したトークンベースの認証
--   **アクセス制御**: ユーザーごとのアクセス権限管理
+### OCR対応フォーマット
+- PDF（日本語・英語対応）
 
----
+## 開発者向け情報
 
-## **9. デプロイ**
+### ディレクトリ構成
 
--   **サーバー**: さくらサーバー
--   **データベース**: さくらサーバー (MySQL)
+```
+app/
+├── Http/
+│   ├── Controllers/    # コントローラー
+│   └── Requests/       # フォームリクエスト
+├── Models/             # モデル
+└── Services/          # ビジネスロジック
+```
 
----
+### 主要なファイル
 
-この設計書を基に、システムの開発を進めてください。
+- `DocumentController.php`: 書類管理の主要な処理
+- `BuildingController.php`: マンション管理
+- `CompanyController.php`: 管理会社管理
+
+### テスト
+
+```bash
+php artisan test
+```
+
+## ライセンス
+
+MIT License
+
+## 作者
+
+株式会社分識
+
+## サポート
+
+不具合や要望は、GitHubのIssueでお知らせください。
