@@ -24,7 +24,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 class HomeController extends Controller
 {
     use AuthorizesRequests, ValidatesRequests;
-    
+
     /**
      * ダッシュボード画面を表示
      * 
