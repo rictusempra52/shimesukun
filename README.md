@@ -1,136 +1,149 @@
-# マンション書類管理システム
+# 書類管理システム
 
-マンションの書類をデジタル化して管理するシステムです。PDFや画像をアップロードし、OCR機能でテキストを抽出して検索可能にします。
+マンションの書類管理を行うWebアプリケーションです。PDF・画像ファイルのアップロードとOCRによるテキスト抽出機能を提供します。
 
 ## 主な機能
 
-- 書類のアップロード・管理
-  - PDF、JPG、PNGファイルに対応
-  - タイトル、マンション、日付による管理
-  - OCRによるテキスト抽出（PDFのみ）
+- 書類のアップロード（PDF、JPG、PNG形式）
+- OCRによるテキスト抽出（日本語対応）
+- マンションごとの書類管理
+- キーワード検索機能
+- ユーザー認証
 
-- 書類の検索
-  - マンションごとの書類一覧
-  - タイトル・本文による全文検索
-  - アップロード日時による並び替え
+## 技術スタック
 
-- マンション・管理会社の管理
-  - マンションと管理会社の紐付け
-  - 住所、戸数などの基本情報管理
+- Laravel 10.x
+- PHP 8.2
+- MySQL 8.0
+- Nginx
+- Docker
+- Tesseract OCR（日本語対応）
+- Tailwind CSS
 
-## 必要要件
+## 開発環境のセットアップ
 
-- PHP 8.1以上
-- MySQL 5.7以上
-- Composer
-- Node.js 16以上
-- Tesseract OCR（PDFからのテキスト抽出に使用）
+### 必要なソフトウェア
 
-## インストール
+- Docker Desktop
+- Git
 
-1. リポジトリのクローン
+### セットアップ手順
+
+1. リポジトリをクローン
 ```bash
-git clone [リポジトリURL]
-cd [プロジェクトディレクトリ]
+git clone [repository-url]
+cd shimesukun
 ```
 
-2. 依存パッケージのインストール
+2. 環境設定
 ```bash
-composer install
-npm install
-```
-
-3. 環境設定
-```bash
+# .envファイルのコピー
 cp .env.example .env
-php artisan key:generate
 ```
 
-4. データベースの設定
-`.env`ファイルでデータベースの接続情報を設定します：
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=shimesukun
-DB_USERNAME=[ユーザー名]
-DB_PASSWORD=[パスワード]
-```
-
-5. データベースのマイグレーション
+3. Dockerコンテナの起動
 ```bash
-php artisan migrate
-php artisan db:seed  # テストデータの作成
+docker-compose up -d
 ```
 
-6. ストレージのリンク作成
+4. アプリケーションのセットアップ
 ```bash
-php artisan storage:link
+# コンテナ内でコマンドを実行
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan storage:link
+docker-compose exec app php artisan migrate:fresh --seed
+docker-compose exec app npm install
+docker-compose exec app npm run build
 ```
 
-7. ビルド & 実行
-```bash
-npm run build
-php artisan serve
-```
+5. アクセス
+- アプリケーション: http://localhost
+- phpMyAdmin: http://localhost:8080
+  - サーバー: db
+  - ユーザー名: shimesukun
+  - パスワード: password
 
-## 使用方法
+### 初期ユーザー
 
-1. ログイン
-   - デフォルトのテストアカウント:
-     - 管理者: admin@example.com / password
-     - 一般: test@example.com / password
+- 管理者アカウント
+  - メール: admin@example.com
+  - パスワード: password
 
-2. 書類のアップロード
-   - 「新規アップロード」ボタンから書類をアップロード
-   - マンション、タイトル、ファイルを選択
-   - PDFの場合は自動でテキスト抽出
+- テストユーザー
+  - メール: test@example.com
+  - パスワード: password
 
-3. 書類の検索・閲覧
-   - マンションを選択して絞り込み
-   - キーワードで検索
-   - 一覧から書類を選択して詳細表示
+## 開発環境での作業
 
-## OCR機能について
-
-PDFファイルをアップロードすると、Tesseract OCRを使用して自動的にテキストを抽出します。抽出されたテキストは検索対象となり、書類の検索性を向上させます。
-
-### OCR対応フォーマット
-- PDF（日本語・英語対応）
-
-## 開発者向け情報
-
-### ディレクトリ構成
-
-```
-app/
-├── Http/
-│   ├── Controllers/    # コントローラー
-│   └── Requests/       # フォームリクエスト
-├── Models/             # モデル
-└── Services/          # ビジネスロジック
-```
-
-### 主要なファイル
-
-- `DocumentController.php`: 書類管理の主要な処理
-- `BuildingController.php`: マンション管理
-- `CompanyController.php`: 管理会社管理
-
-### テスト
+### コンテナの操作
 
 ```bash
-php artisan test
+# コンテナの起動
+docker-compose up -d
+
+# コンテナの停止
+docker-compose down
+
+# コンテナのログ確認
+docker-compose logs -f
+
+# コンテナ内でコマンド実行
+docker-compose exec app php artisan [command]
 ```
+
+### アセットのビルド
+
+```bash
+# 開発時の監視
+docker-compose exec app npm run dev
+
+# 本番用ビルド
+docker-compose exec app npm run build
+```
+
+### データベースのリセット
+
+```bash
+docker-compose exec app php artisan migrate:fresh --seed
+```
+
+## ディレクトリ構造
+
+主要なディレクトリと役割：
+
+```
+shimesukun/
+├── app/                    # アプリケーションのコアコード
+│   ├── Http/              # コントローラー、ミドルウェア、リクエスト
+│   └── Models/            # Eloquentモデル
+├── database/              # マイグレーション、シーダー
+├── docker/               # Dockerの設定ファイル
+├── resources/           # ビュー、CSS、JavaScript
+└── storage/            # アップロードされたファイル
+```
+
+## 機能の詳細
+
+### 書類管理機能
+
+- PDF・画像ファイルのアップロード（最大10MB）
+- OCRによるテキスト抽出（Tesseract OCR使用）
+- マンションごとの分類
+- キーワード検索（タイトル・OCRテキスト）
+
+### ユーザー管理機能
+
+- ログイン・ログアウト
+- パスワードリセット
+- アクセス制限
+
+## 注意事項
+
+- 本番環境では必ずAPP_DEBUGをfalseに設定してください
+- ストレージのシンボリックリンクは必ず作成してください
+- アップロードされたファイルは定期的にバックアップを取ることを推奨します
 
 ## ライセンス
 
-MIT License
-
-## 作者
-
-株式会社分識
-
-## サポート
-
-不具合や要望は、GitHubのIssueでお知らせください。
+[MIT License](LICENSE)
