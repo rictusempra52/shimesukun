@@ -7,7 +7,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * companiesテーブルの作成
+     * 
+     * このマイグレーションでは会社情報を管理するための基本テーブルを作成します。
+     * 以下のカラムが含まれます：
+     * - id: 主キー
+     * - name: 会社名
+     * - address: 会社の所在地
+     * - timestamps: 作成日時と更新日時
+     * - softDeletes: 論理削除用のタイムスタンプ
      */
     public function up(): void
     {
@@ -25,6 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // テーブルが存在する場合、完全に削除します
         Schema::dropIfExists('companies');
     }
 };
